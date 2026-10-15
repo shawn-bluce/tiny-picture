@@ -1,0 +1,5 @@
+# Toolchain used by CI (rustup). Local Homebrew installs of Rust ignore this file.
+[toolchain]
+channel = "1.95.0"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

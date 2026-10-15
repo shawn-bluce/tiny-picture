@@ -1,0 +1,149 @@
+import { Theme } from "theme.slint";
+import { Icon, ActivityIndicator } from "widgets.slint";
+
+export enum FileStatus { pending, compressing, done, skipped, failed }
+
+export struct FileItem {
+    name: string,
+    folder: string,
+    path: string,
+    status: FileStatus,
+    // Details for skipped and failed files
+    message: string,
+    // Pre-formatted sizes ("93.7 KB") and reduction ("34.2%"); "—" when unknown
+    original-size: string,
+    compressed-size: string,
+    saved-size: string,
+    saved-percent: string,
+}
+
+// Column widths shared by the header and the rows.
+global Columns {
+    out property <length> status: 20px;
+    out property <length> size: 84px;
+    out property <length> percent: 64px;
+    out property <length> spacing: Theme.space-3;
+    out property <length> padding-left: Theme.space-3;
+    out property <length> padding-right: Theme.space-4;
+}
+
+component NumberCell inherits Text {
+    in property <length> column-width: Columns.size;
+
+    width: root.column-width;
+    font-size: Theme.font-footnote;
+    color: Theme.text-primary;
+    horizontal-alignment: right;
+    vertical-alignment: center;
+}
+
+export component FileListHeader inherits Rectangle {
+    height: 28px;
+
+    HorizontalLayout {
+        padding-left: Columns.padding-left;
+        padding-right: Columns.padding-right;
+        spacing: Columns.spacing;
+
+        Rectangle { width: Columns.status; }
+        Text {
+            text: "File";
+            horizontal-stretch: 1;
+            font-size: Theme.font-caption;
+            color: Theme.text-secondary;
+            vertical-alignment: center;
+        }
+        NumberCell { text: "Original"; font-size: Theme.font-caption; color: Theme.text-secondary; }
+        NumberCell { text: "Compressed"; font-size: Theme.font-caption; color: Theme.text-secondary; }
+        NumberCell { text: "Saved"; font-size: Theme.font-caption; color: Theme.text-secondary; }
+        NumberCell {
+            column-width: Columns.percent;
+            text: "Saved %";
+            font-size: Theme.font-caption;
+            color: Theme.text-secondary;
+        }
+    }
+}
+
+export component FileRow inherits Rectangle {
+    in property <FileItem> item;
+    in property <bool> striped;
+
+    private property <string> status-text: root.item.status == FileStatus.compressing ? "Compressing"
+        : root.item.status == FileStatus.done ? "Compressed"
+        : root.item.status == FileStatus.skipped ? "Skipped"
+        : root.item.status == FileStatus.failed ? "Failed"
+        : "Waiting";
+    private property <string> status-detail: root.item.message == "" ? root.status-text
+        : "\{root.status-text}: \{root.item.message}";
+
+    height: 44px;
+    background: hover.has-hover ? Theme.surface-hover : root.striped ? Theme.surface-stripe : transparent;
+    accessible-role: list-item;
+    accessible-label: root.item.name;
+    accessible-description: root.status-detail;
+
+    hover := TouchArea { }
+
+    HorizontalLayout {
+        padding-left: Columns.padding-left;
+        padding-right: Columns.padding-right;
+        spacing: Columns.spacing;
+
+        // Status icon. Each state has its own shape, so color is never the only cue.
+        Rectangle {
+            width: Columns.status;
+
+            VerticalLayout {
+                alignment: center;
+                HorizontalLayout {
+                    alignment: center;
+                    if root.item.status == FileStatus.pending: Icon {
+                        source: @image-url("icons/circle.svg");
+                    }
+                    if root.item.status == FileStatus.compressing: ActivityIndicator { }
+                    if root.item.status == FileStatus.done: Icon {
+                        source: @image-url("icons/check-circle.svg");
+                        colorize: Theme.success;
+                    }
+                    if root.item.status == FileStatus.skipped: Icon {
+                        source: @image-url("icons/skip-circle.svg");
+                    }
+                    if root.item.status == FileStatus.failed: Icon {
+                        source: @image-url("icons/warning-circle.svg");
+                        colorize: Theme.danger;
+                    }
+                }
+            }
+
+            Tooltip {
+                text: @markdown("\{root.status-detail}");
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            spacing: 1px;
+            horizontal-stretch: 1;
+            Text {
+                text: root.item.name;
+                color: Theme.text-primary;
+                overflow: elide;
+            }
+            Text {
+                text: root.item.folder;
+                font-size: Theme.font-caption;
+                color: Theme.text-secondary;
+                overflow: elide;
+            }
+        }
+
+        NumberCell { text: root.item.original-size; }
+        NumberCell { text: root.item.compressed-size; }
+        NumberCell { text: root.item.saved-size; }
+        NumberCell {
+            column-width: Columns.percent;
+            text: root.item.saved-percent;
+        }
+    }
+}

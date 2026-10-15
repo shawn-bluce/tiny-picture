@@ -1,0 +1,203 @@
+import { Palette } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Icon } from "widgets.slint";
+
+// Chevron drawn with a path, pointing up or down.
+component Chevron inherits Path {
+    in property <bool> up;
+
+    width: 6px;
+    height: 3.5px;
+    viewbox-width: 6;
+    viewbox-height: 3.5;
+    commands: root.up ? "M 0.5 3 L 3 0.5 L 5.5 3" : "M 0.5 0.5 L 3 3 L 5.5 0.5";
+    stroke: Theme.on-accent;
+    stroke-width: 1.3px;
+}
+
+// A macOS-style pop-up button (like NSPopUpButton): the menu opens over the
+// button with the selected item aligned to it, so it stays inside the window
+// even when the button is near the bottom edge.
+//
+// Keyboard: Space/Return opens the menu, Up/Down changes the selection.
+export component PopUpButton {
+    in property <[string]> model;
+    in property <bool> enabled: true;
+    // Accessible name, usually the text of the form label
+    in property <string> label;
+    in-out property <int> current-index: 0;
+
+    callback selected(index: int);
+
+    private property <length> item-height: Theme.control-height;
+    private property <length> menu-padding: 5px;
+
+    min-width: 110px;
+    min-height: Theme.control-height;
+    horizontal-stretch: 0;
+    vertical-stretch: 0;
+    opacity: root.enabled ? 1 : 0.5;
+    forward-focus: focus;
+    accessible-role: combobox;
+    accessible-label: root.label;
+    accessible-value: root.model[root.current-index];
+    accessible-enabled: root.enabled;
+    accessible-action-expand => { menu.show(); }
+
+    function select(index: int) {
+        if (index != root.current-index) {
+            root.current-index = index;
+            root.selected(index);
+        }
+    }
+
+    // Focus ring
+    Rectangle {
+        x: -3px;
+        y: -3px;
+        width: parent.width + 6px;
+        height: parent.height + 6px;
+        border-radius: Theme.radius-md + 3px;
+        border-width: 3px;
+        border-color: Theme.accent;
+        opacity: focus.has-focus ? 0.5 : 0;
+
+        animate opacity { duration: Theme.motion-fast; }
+    }
+
+    // Button face
+    Rectangle {
+        border-radius: Theme.radius-md;
+        background: touch.pressed ? Palette.control-background.darker(0.15) : Palette.control-background;
+        border-width: 0.5px;
+        border-color: Palette.border;
+        drop-shadow-blur: 1px;
+        drop-shadow-offset-y: 0.5px;
+        drop-shadow-color: #00000033;
+    }
+
+    HorizontalLayout {
+        padding-left: Theme.space-2;
+        padding-right: 3px;
+        spacing: 6px;
+
+        Text {
+            text: root.model[root.current-index];
+            color: Palette.control-foreground;
+            vertical-alignment: center;
+            horizontal-stretch: 1;
+            overflow: elide;
+        }
+
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: Theme.radius-sm;
+                background: Theme.accent;
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 2px;
+                    HorizontalLayout {
+                        alignment: center;
+                        Chevron { up: true; }
+                    }
+                    HorizontalLayout {
+                        alignment: center;
+                        Chevron { up: false; }
+                    }
+                }
+            }
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            focus.focus();
+            menu.show();
+        }
+    }
+
+    focus := FocusScope {
+        // Zero width: focus is taken via the touch area, not by clicks here.
+        width: 0;
+        enabled: root.enabled;
+        key-pressed(event) => {
+            if (event.text == Key.Space || event.text == Key.Return) {
+                menu.show();
+                return accept;
+            }
+            if (event.text == Key.UpArrow) {
+                root.select(Math.max(0, root.current-index - 1));
+                return accept;
+            }
+            if (event.text == Key.DownArrow) {
+                root.select(Math.min(root.model.length - 1, root.current-index + 1));
+                return accept;
+            }
+            return reject;
+        }
+    }
+
+    menu := PopupWindow {
+        x: -root.menu-padding;
+        y: (root.height - root.item-height) / 2 - root.menu-padding - root.current-index * root.item-height;
+        width: root.width + 2 * root.menu-padding;
+        height: root.model.length * root.item-height + 2 * root.menu-padding;
+        close-policy: close-on-click-outside;
+
+        Rectangle {
+            border-radius: Theme.radius-md + 1px;
+            background: Palette.control-background;
+            border-width: 0.5px;
+            border-color: Palette.border;
+            drop-shadow-blur: 12px;
+            drop-shadow-offset-y: 4px;
+            drop-shadow-color: #00000059;
+
+            VerticalLayout {
+                padding: root.menu-padding;
+
+                for item[index] in root.model: Rectangle {
+                    height: root.item-height;
+                    border-radius: Theme.radius-sm;
+                    background: item-touch.has-hover ? Theme.accent : transparent;
+
+                    HorizontalLayout {
+                        padding-left: 6px;
+                        padding-right: Theme.space-2;
+                        spacing: Theme.space-1;
+
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                size: 12px;
+                                source: @image-url("icons/check.svg");
+                                colorize: item-touch.has-hover ? Theme.on-accent : Palette.control-foreground;
+                                opacity: index == root.current-index ? 1 : 0;
+                            }
+                        }
+                        Text {
+                            text: item;
+                            color: item-touch.has-hover ? Theme.on-accent : Palette.control-foreground;
+                            vertical-alignment: center;
+                            overflow: elide;
+                        }
+                    }
+
+                    item-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.select(index);
+                            menu.close();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

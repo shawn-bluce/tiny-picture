@@ -1,0 +1,51 @@
+import { Palette } from "std-widgets.slint";
+
+// Design tokens. Components use these instead of raw colors and sizes.
+// Text colors follow macOS label colors and meet WCAG AA (>= 4.5:1) on both
+// `surface` and the window background in light and dark mode.
+export global Theme {
+    out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
+
+    // ---- Colors ----
+    out property <color> text-primary: root.dark ? #ffffffd9 : #000000d9;
+    out property <color> text-secondary: root.dark ? #ffffff99 : #000000a0;
+    out property <color> separator: root.dark ? #ffffff1f : #0000001f;
+    // Content background (the list), like NSTableView
+    out property <color> surface: root.dark ? #1e1e1e : #ffffff;
+    out property <color> surface-stripe: root.dark ? #ffffff08 : #00000006;
+    out property <color> surface-hover: root.dark ? #ffffff10 : #0000000b;
+    out property <brush> accent: Palette.accent-background;
+    out property <brush> on-accent: #ffffff;
+    // Status colors. `success` is only used for icons (non-text, >= 3:1).
+    out property <color> success: root.dark ? #30d158 : #248a3d;
+    out property <color> danger: root.dark ? #ff453a : #d70015;
+
+    // ---- Spacing (4px grid) ----
+    out property <length> space-1: 4px;
+    out property <length> space-2: 8px;
+    out property <length> space-3: 12px;
+    out property <length> space-4: 16px;
+    out property <length> space-5: 20px;
+    out property <length> space-6: 24px;
+
+    // ---- Shape ----
+    out property <length> radius-sm: 4px;
+    out property <length> radius-md: 6px;
+    out property <length> radius-lg: 10px;
+    out property <length> control-height: 22px;
+
+    // ---- Typography (macOS text styles) ----
+    out property <length> font-caption: 11px;
+    out property <length> font-footnote: 12px;
+    out property <length> font-body: 13px;
+    out property <length> font-title: 17px;
+
+    // ---- Icons ----
+    out property <length> icon-sm: 14px;
+    out property <length> icon-md: 20px;
+    out property <length> icon-lg: 48px;
+
+    // ---- Motion ----
+    out property <duration> motion-fast: 120ms;
+    out property <duration> motion-normal: 180ms;
+}

@@ -1,0 +1,68 @@
+import { Theme } from "theme.slint";
+
+// Monochrome SVG icon, tinted with `colorize`.
+export component Icon inherits Image {
+    in property <length> size: Theme.icon-sm;
+
+    width: root.size;
+    height: root.size;
+    image-fit: contain;
+    colorize: Theme.text-secondary;
+    accessible-role: none;
+}
+
+// Small indeterminate spinner that matches the icon set.
+export component ActivityIndicator {
+    in property <length> size: Theme.icon-sm;
+
+    width: root.size;
+    height: root.size;
+    accessible-role: none;
+
+    Image {
+        width: 100%;
+        height: 100%;
+        source: @image-url("icons/spinner.svg");
+        colorize: Theme.text-secondary;
+        transform-rotation: Math.mod(animation-tick() / 1ms, 900) / 900 * 360deg;
+    }
+}
+
+// Circled exclamation mark that explains the control next to it on hover.
+export component InfoBadge inherits Rectangle {
+    in property <styled-text> tooltip;
+
+    width: Theme.icon-sm;
+    height: Theme.icon-sm;
+
+    Icon {
+        source: @image-url("icons/warning-circle.svg");
+    }
+
+    Tooltip {
+        text: root.tooltip;
+    }
+}
+
+// Right-aligned form label, centered on the first control row.
+export component FormLabel {
+    in property <string> text;
+
+    horizontal-stretch: 0;
+
+    VerticalLayout {
+        alignment: start;
+        Text {
+            height: Theme.control-height;
+            text: root.text;
+            color: Theme.text-primary;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component Separator inherits Rectangle {
+    height: 1px;
+    background: Theme.separator;
+}

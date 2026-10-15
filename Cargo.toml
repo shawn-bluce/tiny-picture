@@ -1,0 +1,27 @@
+[package]
+name = "tiny-picture"
+version = "0.1.0"
+edition = "2024"
+description = "Batch image compressor for macOS"
+license = "MIT"
+repository = "https://github.com/shawn-bluce/tiny-picture"
+rust-version = "1.88"
+publish = false
+
+[dependencies]
+exoquant = "0.2.0"
+image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "webp", "gif"] }
+mozjpeg = { version = "0.10.13", default-features = false, features = ["with_simd"] }
+mozjpeg-sys = { version = "2.2", default-features = false, features = ["unwinding"] }
+oxipng = { version = "10.2.1", default-features = false }
+slint = { version = "1.18", features = ["unstable-winit-030"] }
+webp = { version = "0.3.1", default-features = false }
+
+[build-dependencies]
+slint-build = "1.18"
+
+[profile.release]
+# rustc strips with rust-objcopy (LLVM), which can leave a misaligned LINKEDIT
+# string pool that dyld refuses to load ("mis-aligned LINKEDIT string pool").
+# Not stripping costs about 0.2 MB.
+strip = false

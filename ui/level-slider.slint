@@ -1,0 +1,63 @@
+import { Slider } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+
+// Discrete slider with a clickable label under each stop and a caption that
+// describes the selected stop.
+export component LevelSlider {
+    in property <[string]> names;
+    in property <[string]> descriptions;
+    in property <bool> enabled: true;
+    in-out property <float> value;
+
+    private property <int> current: Math.round(root.value);
+    private property <int> last: root.names.length - 1;
+    // The cupertino slider thumb is 20px wide, so stops start and end 10px in.
+    private property <length> thumb-inset: 10px;
+    private property <length> stop-label-width: 64px;
+
+    VerticalLayout {
+        spacing: Theme.space-1;
+
+        Slider {
+            minimum: 0;
+            maximum: root.last;
+            step: 1;
+            enabled: root.enabled;
+            value <=> root.value;
+            changed(value) => { root.value = Math.round(value); }
+        }
+
+        // Fixed-width labels keep their position when the selection (and weight) changes.
+        Rectangle {
+            height: 16px;
+            for name[index] in root.names: Rectangle {
+                property <length> stop-x: root.thumb-inset + (parent.width - 2 * root.thumb-inset) * index / root.last;
+                width: root.stop-label-width;
+                x: clamp(self.stop-x - self.width / 2, 0, parent.width - self.width);
+
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    text: name;
+                    font-size: Theme.font-caption;
+                    font-weight: index == root.current ? 600 : 400;
+                    color: index == root.current ? Theme.text-primary : Theme.text-secondary;
+                    vertical-alignment: center;
+                    horizontal-alignment: index == 0 ? TextHorizontalAlignment.left : index == root.last ? TextHorizontalAlignment.right : TextHorizontalAlignment.center;
+                }
+
+                TouchArea {
+                    enabled: root.enabled;
+                    mouse-cursor: pointer;
+                    clicked => { root.value = index; }
+                }
+            }
+        }
+
+        Text {
+            text: root.descriptions[root.current];
+            font-size: Theme.font-caption;
+            color: Theme.text-secondary;
+        }
+    }
+}
